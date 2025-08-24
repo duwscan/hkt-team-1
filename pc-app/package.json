@@ -1,0 +1,50 @@
+{
+  "name": "chrome-recorder-pc-app",
+  "version": "1.0.0",
+  "description": "Chrome Recorder Test Management System - PC Application",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "dependencies": {
+    "electron": "^27.0.0",
+    "puppeteer": "^21.0.0",
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {
+    "electron-builder": "^24.6.0"
+  },
+  "build": {
+    "appId": "com.chromerecorder.pcapp",
+    "productName": "Chrome Recorder Test Manager",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "**/*",
+      "!node_modules/**/*"
+    ],
+    "mac": {
+      "category": "public.app-category.developer-tools"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
+  },
+  "keywords": [
+    "chrome-recorder",
+    "test-automation",
+    "qa-testing",
+    "electron",
+    "puppeteer"
+  ],
+  "author": "Chrome Recorder Team",
+  "license": "MIT"
+}
