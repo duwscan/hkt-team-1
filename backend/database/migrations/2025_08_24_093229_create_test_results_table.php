@@ -13,6 +13,12 @@ return new class extends Migration
     {
         Schema::create('test_results', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('test_script_id')->constrained()->onDelete('cascade');
+            $table->enum('status', ['running', 'passed', 'failed', 'error'])->default('running');
+            $table->json('execution_data')->nullable(); // Store URLs, console logs, screenshots per step
+            $table->timestamp('started_at')->nullable();
+            $table->timestamp('completed_at')->nullable();
+            $table->text('error_message')->nullable();
             $table->timestamps();
         });
     }

@@ -13,6 +13,10 @@ return new class extends Migration
     {
         Schema::create('api_keys', function (Blueprint $table) {
             $table->id();
+            $table->string('key')->unique();
+            $table->string('name')->default('Default API Key');
+            $table->boolean('is_active')->default(true);
+            $table->timestamp('last_used_at')->nullable();
             $table->timestamps();
         });
     }
