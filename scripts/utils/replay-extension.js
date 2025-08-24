@@ -35,26 +35,7 @@ export class ChromeRecorderExtension {
       console.log('🎬 Starting Chrome Recorder script execution...');
     }
     
-    // Take initial screenshot
-    if (this.options.takeStepScreenshots) {
-      try {
-        const screenshotPath = await takeScreenshot(this.page, this.options.outputDir, 'step-0-initial');
-        this.results.screenshots.push({
-          step: 0,
-          type: 'initial',
-          path: screenshotPath,
-          timestamp: new Date().toISOString()
-        });
-      } catch (error) {
-        console.error('❌ Error taking initial screenshot:', error.message);
-        this.results.errors.push({
-          step: 0,
-          type: 'screenshot',
-          error: error.message,
-          timestamp: new Date().toISOString()
-        });
-      }
-    }
+    // Don't take initial screenshot here - only at the very beginning and end
 
     // Initial performance measurement
     if (this.options.measurePerformance) {
@@ -97,31 +78,7 @@ export class ChromeRecorderExtension {
    */
   async afterEachStep(step, flow) {
     try {
-      // Take screenshot after each step
-      if (this.options.takeStepScreenshots) {
-        try {
-          const screenshotPath = await takeScreenshot(
-            this.page, 
-            this.options.outputDir, 
-            `step-${this.stepCount}-${step.type}`
-          );
-          this.results.screenshots.push({
-            step: this.stepCount,
-            type: step.type,
-            path: screenshotPath,
-            timestamp: new Date().toISOString(),
-            url: this.page.url()
-          });
-        } catch (error) {
-          console.error(`❌ Error taking screenshot for step ${this.stepCount}:`, error.message);
-          this.results.errors.push({
-            step: this.stepCount,
-            type: 'screenshot',
-            error: error.message,
-            timestamp: new Date().toISOString()
-          });
-        }
-      }
+      // Don't take screenshots after each step - only at the beginning and end
 
       // Measure performance after certain steps
       if (this.options.measurePerformance && ['navigate', 'click', 'change'].includes(step.type)) {
@@ -165,27 +122,7 @@ export class ChromeRecorderExtension {
       console.log('🎬 Chrome Recorder script execution completed');
     }
 
-    // Take final screenshot
-    if (this.options.takeStepScreenshots) {
-      try {
-        const screenshotPath = await takeScreenshot(this.page, this.options.outputDir, 'step-final');
-        this.results.screenshots.push({
-          step: this.stepCount + 1,
-          type: 'final',
-          path: screenshotPath,
-          timestamp: new Date().toISOString(),
-          url: this.page.url()
-        });
-      } catch (error) {
-        console.error('❌ Error taking final screenshot:', error.message);
-        this.results.errors.push({
-          step: this.stepCount + 1,
-          type: 'screenshot',
-          error: error.message,
-          timestamp: new Date().toISOString()
-        });
-      }
-    }
+    // Don't take final screenshot here - only at the very beginning and end from runner
 
     // Final performance measurement
     if (this.options.measurePerformance) {

@@ -1,11 +1,22 @@
 import url from 'url';
 import { createRunner } from '@puppeteer/replay';
 
-export async function run(extension) {
+export async function run(extension, page) {
+    // Call extension before all steps
+    if (extension && typeof extension.beforeAllSteps === 'function') {
+        await extension.beforeAllSteps();
+    }
+
     const runner = await createRunner(extension);
 
-    await runner.runBeforeAllSteps();
-
+    // Step 1: Set viewport
+    console.log('📱 Step 1: Setting viewport to 1097x934...');
+    await page.evaluate((stepNum) => {
+        if (window.showStepIndicator) {
+            window.showStepIndicator(stepNum, 'Setting viewport to 1097x934');
+        }
+    }, 1);
+    
     await runner.runStep({
         type: 'setViewport',
         width: 1097,
@@ -15,6 +26,19 @@ export async function run(extension) {
         hasTouch: false,
         isLandscape: false
     });
+    console.log('✅ Viewport set to 1097x934 successfully');
+    
+    // Wait a bit to see the change
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    
+    // Step 2: Navigate
+    console.log('🌐 Step 2: Navigating to recruit page...');
+    await page.evaluate((stepNum) => {
+        if (window.showStepIndicator) {
+            window.showStepIndicator(stepNum, 'Navigating to recruit page');
+        }
+    }, 2);
+    
     await runner.runStep({
         type: 'navigate',
         url: 'https://yopaz.vn/recruit/#',
@@ -26,6 +50,18 @@ export async function run(extension) {
             }
         ]
     });
+    
+    // Wait for navigation to complete
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    
+    // Step 3: Click on top section
+    console.log('🖱️ Step 3: Clicking on top section (offset: 366, 106)...');
+    await page.evaluate((stepNum) => {
+        if (window.showStepIndicator) {
+            window.showStepIndicator(stepNum, 'Clicking on top section');
+        }
+    }, 3);
+    
     await runner.runStep({
         type: 'click',
         target: 'main',
@@ -43,6 +79,19 @@ export async function run(extension) {
         offsetY: 106,
         offsetX: 366,
     });
+    console.log('✅ Click completed at position (366, 106)');
+    
+    // Wait to see the click effect
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    
+    // Step 4: Click on page 3 navigation
+    console.log('📄 Step 4: Clicking on page 3 navigation (offset: 25.64, 37.61)...');
+    await page.evaluate((stepNum) => {
+        if (window.showStepIndicator) {
+            window.showStepIndicator(stepNum, 'Clicking on page 3 navigation');
+        }
+    }, 4);
+    
     await runner.runStep({
         type: 'click',
         target: 'main',
@@ -68,6 +117,10 @@ export async function run(extension) {
             }
         ]
     });
+    console.log('✅ Navigation to page 3 completed');
+    
+    // Wait to see the navigation effect
+    await new Promise(resolve => setTimeout(resolve, 3000));
     await runner.runStep({
         type: 'click',
         target: 'main',

@@ -25,7 +25,6 @@ export async function takeScreenshot(page, outputDir = './output', prefix = 'scr
     await page.screenshot({
       path: filePath,
       fullPage: true,
-      quality: 90,
       type: 'png'
     });
     
