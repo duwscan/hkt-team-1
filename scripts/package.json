@@ -1,0 +1,31 @@
+{
+  "name": "chrome-recorder-scripts",
+  "version": "1.0.0",
+  "description": "Scripts for executing Chrome Recorder test scenarios with Puppeteer/Playwright",
+  "type": "module",
+  "main": "runner.js",
+  "scripts": {
+    "test": "node runner.js --help",
+    "demo": "node demo-runner.js -s ./example.js -u https://yopaz.vn/recruit/#",
+    "run": "node runner.js",
+    "postinstall": "echo 'Dependencies installed successfully. Use npm run demo for testing without browser dependencies.'",
+    "example": "node demo-runner.js -s ./example.js -u https://yopaz.vn/recruit/#"
+  },
+  "dependencies": {
+    "commander": "^12.0.0",
+    "@puppeteer/replay": "^3.0.0",
+    "puppeteer": "^24.0.0"
+  },
+  "optionalDependencies": {
+    "playwright": "^1.41.2"
+  },
+  "keywords": [
+    "chrome-recorder",
+    "puppeteer", 
+    "playwright",
+    "automation",
+    "testing"
+  ],
+  "author": "HKT Team 1",
+  "license": "MIT"
+}
