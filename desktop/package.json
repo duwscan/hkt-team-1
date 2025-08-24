@@ -1,0 +1,51 @@
+{
+  "name": "chrome-recorder-desktop",
+  "version": "1.0.0",
+  "description": "Desktop app for Chrome Recorder test management and execution",
+  "main": "public/electron.js",
+  "scripts": {
+    "dev": "concurrently \"npm run react-dev\" \"wait-on http://localhost:3000 && npm run electron-dev\"",
+    "react-dev": "react-scripts start",
+    "electron-dev": "ELECTRON_IS_DEV=true electron .",
+    "build": "react-scripts build",
+    "electron-pack": "electron-builder",
+    "preelectron-pack": "npm run build",
+    "start": "npm run dev",
+    "test": "react-scripts test"
+  },
+  "keywords": ["electron", "react", "chrome-recorder", "automation", "testing"],
+  "author": "HKT Team 1",
+  "license": "MIT",
+  "homepage": "./",
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "concurrently": "^8.2.0",
+    "electron": "^25.0.0",
+    "electron-builder": "^24.0.0",
+    "wait-on": "^7.0.0"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-scripts": "5.0.1",
+    "puppeteer": "^21.0.0",
+    "axios": "^1.4.0",
+    "@mui/material": "^5.14.0",
+    "@emotion/react": "^11.11.0",
+    "@emotion/styled": "^11.11.0",
+    "@mui/icons-material": "^5.14.0"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}
