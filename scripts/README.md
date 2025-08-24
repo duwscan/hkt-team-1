@@ -36,7 +36,7 @@ scripts/
 ✅ **Nhận đường dẫn của 1 file js**: Command-line argument `-s <script-path>`  
 ✅ **Nhận URL màn hình**: Command-line argument `-u <url>`  
 ✅ **Truy cập vào màn hình URL**: Browser navigation with wait strategies  
-✅ **Load instance của Chrome**: Puppeteer launch with system Chrome detection  
+✅ **Load instance của Chrome**: Cross-platform Puppeteer with bundled Chromium  
 ✅ **Chạy lại kịch bản Chrome Recorder**: Full @puppeteer/replay integration  
 ✅ **Đo thời gian tải**: Performance timing and Web Vitals collection  
 ✅ **Kiểm tra lỗi console**: Real-time console error monitoring  
@@ -47,13 +47,11 @@ scripts/
 ## 🔧 Installation
 
 ```bash
-# Install dependencies
+# Install dependencies (includes bundled Chromium for cross-platform compatibility)
 npm install
-
-# Optional: Install system Chrome (if not already installed)
-sudo apt-get update
-sudo apt-get install google-chrome-stable
 ```
+
+**Cross-Platform Support**: The system now uses the standard `puppeteer` package with bundled Chromium, eliminating the need to install Chrome manually or configure executable paths. This works out of the box on Windows, macOS, and Linux.
 
 ## 📚 Usage Examples
 

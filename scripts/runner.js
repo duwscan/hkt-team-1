@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join, resolve, basename } from 'path';
 import { existsSync } from 'fs';
 import { performance } from 'perf_hooks';
-import puppeteer from 'puppeteer-core';
+import puppeteer from 'puppeteer';
 import { createRunner } from '@puppeteer/replay';
 import { takeScreenshot } from './utils/screenshot.js';
 import { ConsoleLogger } from './utils/console-logger.js';
@@ -46,40 +46,14 @@ async function runScript() {
     console.log(`📄 Script: ${scriptPath}`);
     console.log(`🌐 URL: ${options.url}`);
     
-    // Launch browser
+    // Launch browser with cross-platform compatibility
     const browserOptions = {
       headless: options.headless === 'true' || options.headless === true,
       defaultViewport: { width: 1920, height: 1080 },
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     };
     
-    // Try to find Chrome/Chromium executable
-    const possiblePaths = [
-      '/usr/bin/google-chrome',
-      '/usr/bin/google-chrome-stable',
-      '/usr/bin/chromium-browser',
-      '/usr/bin/chromium',
-      '/snap/bin/chromium',
-      process.env.CHROME_EXECUTABLE_PATH
-    ].filter(Boolean);
-    
-    for (const executablePath of possiblePaths) {
-      try {
-        const fs = await import('fs');
-        if (fs.existsSync(executablePath)) {
-          browserOptions.executablePath = executablePath;
-          console.log(`🌐 Using Chrome at: ${executablePath}`);
-          break;
-        }
-      } catch (e) {
-        // Continue to next path
-      }
-    }
-    
-    if (!browserOptions.executablePath) {
-      console.log('⚠️ Chrome executable not found, trying without explicit path...');
-    }
-    
+    console.log(`🌐 Launching Chrome with bundled Chromium (cross-platform)`);
     browser = await puppeteer.launch(browserOptions);
     page = await browser.newPage();
     
