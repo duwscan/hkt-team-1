@@ -6,13 +6,14 @@
   "main": "runner.js",
   "scripts": {
     "test": "node runner.js --help",
-    "demo": "node demo-runner.js",
+    "demo": "node demo-runner.js -s ./example.js -u https://yopaz.vn/recruit/#",
     "run": "node runner.js",
     "postinstall": "echo 'Dependencies installed successfully. Use npm run demo for testing without browser dependencies.'",
-    "example": "node demo-runner.js -s ./examples/sample-recorder-script.js -u https://example.com"
+    "example": "node demo-runner.js -s ./example.js -u https://yopaz.vn/recruit/#"
   },
   "dependencies": {
-    "commander": "^12.0.0"
+    "commander": "^12.0.0",
+    "@puppeteer/replay": "^3.0.0"
   },
   "optionalDependencies": {
     "puppeteer-core": "^22.4.0",

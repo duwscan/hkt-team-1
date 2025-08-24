@@ -310,6 +310,6 @@ export async function run(extension) {
     await runner.runAfterAllSteps();
 }
 
-if (process && import.meta.url === url.pathToFileURL(process.argv[1]).href) {
+if (process && process.argv && process.argv[1] && import.meta.url === url.pathToFileURL(process.argv[1]).href) {
     run()
 }
