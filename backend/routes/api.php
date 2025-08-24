@@ -1,40 +1,27 @@
 <?php
 
-use App\Http\Controllers\Api\ApiKeyController;
-use App\Http\Controllers\Api\ProjectController;
-use App\Http\Controllers\Api\ScreenController;
-use App\Http\Controllers\Api\TestScriptController;
-use App\Http\Controllers\Api\TagController;
-use App\Http\Controllers\Api\TestResultController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\TestResultController;
 
-// Public routes for API key management
-Route::post('/api-keys', [ApiKeyController::class, 'store']);
-Route::get('/api-keys/{key}', [ApiKeyController::class, 'show']);
+/*
+|--------------------------------------------------------------------------
+| API Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register API routes for your application. These
+| routes are loaded by the RouteServiceProvider and all of them will
+| be assigned to the "api" middleware group. Make something great!
+|
+*/
 
-// Protected routes requiring API key authentication
+Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+    return $request->user();
+});
+
+// Test Results API routes with API key authentication
 Route::middleware('api.key')->group(function () {
-    // Projects
-    Route::apiResource('projects', ProjectController::class);
-    
-    // Screens
-    Route::apiResource('screens', ScreenController::class);
-    Route::get('projects/{project}/screens', [ScreenController::class, 'getByProject']);
-    
-    // Tags
-    Route::apiResource('tags', TagController::class);
-    Route::get('projects/{project}/tags', [TagController::class, 'getByProject']);
-    
-    // Test Scripts
-    Route::apiResource('test-scripts', TestScriptController::class);
-    Route::get('test-scripts/search', [TestScriptController::class, 'search']);
-    
-    // Test Results
-    Route::apiResource('test-results', TestResultController::class)->only(['index', 'show', 'store', 'destroy']);
-    Route::get('test-results/search', [TestResultController::class, 'search']);
-    
-    // API Key management (protected routes)
-    Route::get('/api-keys', [ApiKeyController::class, 'index']);
-    Route::put('/api-keys/{apiKey}', [ApiKeyController::class, 'update']);
-    Route::delete('/api-keys/{apiKey}', [ApiKeyController::class, 'destroy']);
+    Route::get('/test-results', [TestResultController::class, 'index']);
+    Route::post('/test-results', [TestResultController::class, 'store']);
+    Route::get('/test-results/{id}', [TestResultController::class, 'show']);
 });
