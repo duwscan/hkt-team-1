@@ -17,7 +17,10 @@ class ScreenFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'name' => fake()->words(2, true),
+            'domain' => fake()->domainName(),
+            'url_path' => '/'.fake()->slug(),
+            'description' => fake()->sentence(),
         ];
     }
 }

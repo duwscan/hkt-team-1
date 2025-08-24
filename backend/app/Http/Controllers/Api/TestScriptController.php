@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateTestScriptRequest;
 use App\Models\TestScript;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class TestScriptController extends Controller
 {
@@ -17,10 +18,10 @@ class TestScriptController extends Controller
     public function index(): JsonResponse
     {
         $testScripts = TestScript::with(['project', 'screen', 'tags'])->get();
-        
+
         return response()->json([
             'data' => $testScripts,
-            'message' => 'Test scripts retrieved successfully'
+            'message' => 'Test scripts retrieved successfully',
         ]);
     }
 
@@ -30,14 +31,14 @@ class TestScriptController extends Controller
     public function store(StoreTestScriptRequest $request): JsonResponse
     {
         $testScript = TestScript::create($request->validated());
-        
+
         if ($request->has('tag_ids')) {
             $testScript->tags()->attach($request->tag_ids);
         }
-        
+
         return response()->json([
             'data' => $testScript->load(['project', 'screen', 'tags']),
-            'message' => 'Test script created successfully'
+            'message' => 'Test script created successfully',
         ], 201);
     }
 
@@ -48,7 +49,7 @@ class TestScriptController extends Controller
     {
         return response()->json([
             'data' => $testScript->load(['project', 'screen', 'tags']),
-            'message' => 'Test script retrieved successfully'
+            'message' => 'Test script retrieved successfully',
         ]);
     }
 
@@ -58,14 +59,14 @@ class TestScriptController extends Controller
     public function update(UpdateTestScriptRequest $request, TestScript $testScript): JsonResponse
     {
         $testScript->update($request->validated());
-        
+
         if ($request->has('tag_ids')) {
             $testScript->tags()->sync($request->tag_ids);
         }
-        
+
         return response()->json([
             'data' => $testScript->load(['project', 'screen', 'tags']),
-            'message' => 'Test script updated successfully'
+            'message' => 'Test script updated successfully',
         ]);
     }
 
@@ -75,9 +76,9 @@ class TestScriptController extends Controller
     public function destroy(TestScript $testScript): JsonResponse
     {
         $testScript->delete();
-        
+
         return response()->json([
-            'message' => 'Test script deleted successfully'
+            'message' => 'Test script deleted successfully',
         ]);
     }
 
@@ -87,28 +88,116 @@ class TestScriptController extends Controller
     public function search(Request $request): JsonResponse
     {
         $query = TestScript::with(['project', 'screen', 'tags']);
-        
+
         if ($request->has('q')) {
             $searchTerm = $request->q;
-            $query->where(function($q) use ($searchTerm) {
+            $query->where(function ($q) use ($searchTerm) {
                 $q->where('name', 'like', "%{$searchTerm}%")
-                  ->orWhere('js_file_content', 'like', "%{$searchTerm}%");
+                    ->orWhere('js_file_content', 'like', "%{$searchTerm}%");
             });
         }
-        
+
         if ($request->has('project_id')) {
             $query->where('project_id', $request->project_id);
         }
-        
+
         if ($request->has('screen_id')) {
             $query->where('screen_id', $request->screen_id);
         }
-        
+
         $testScripts = $query->get();
-        
+
         return response()->json([
             'data' => $testScripts,
-            'message' => 'Test scripts search completed'
+            'message' => 'Test scripts search completed',
         ]);
+    }
+
+    /**
+     * Get the JavaScript file content of a test script.
+     */
+    public function getContent(TestScript $testScript)
+    {
+        try {
+            // Check if test script has a JavaScript file
+            if (! $testScript->js_file_path) {
+                return response()->json([
+                    'error' => 'No JavaScript file found for this test script',
+                    'message' => 'Test script does not have an uploaded JavaScript file',
+                ], 404);
+            }
+
+            // Check if file exists using Storage facade
+            if (! Storage::disk('public')->exists($testScript->js_file_path)) {
+                return response()->json([
+                    'error' => 'JavaScript file not found on server',
+                    'message' => 'The uploaded file does not exist on the server',
+                ], 404);
+            }
+
+            // Read file content using Storage facade
+            $fileContent = Storage::disk('public')->get($testScript->js_file_path);
+
+            if ($fileContent === false) {
+                return response()->json([
+                    'error' => 'Failed to read file content',
+                    'message' => 'Unable to read the JavaScript file content',
+                ], 500);
+            }
+
+            // Return only the content
+            return response($fileContent, 200, [
+                'Content-Type' => 'application/javascript',
+                'Content-Disposition' => 'inline; filename="'.$testScript->js_file_name.'"',
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Internal server error',
+                'message' => 'Failed to retrieve JavaScript file content',
+                'debug' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
+    }
+
+    /**
+     * Download the JavaScript file of a test script.
+     */
+    public function download(TestScript $testScript): JsonResponse
+    {
+        try {
+            // Check if test script has a JavaScript file
+            if (! $testScript->js_file_path) {
+                return response()->json([
+                    'error' => 'No JavaScript file found for this test script',
+                    'message' => 'Test script does not have an uploaded JavaScript file',
+                ], 404);
+            }
+
+            // Check if file exists using Storage facade
+            if (! Storage::disk('public')->exists($testScript->js_file_path)) {
+                return response()->json([
+                    'error' => 'JavaScript file not found on server',
+                    'message' => 'The uploaded file does not exist on the server',
+                ], 404);
+            }
+
+            // Return only essential info for download
+            return response()->json([
+                'data' => [
+                    'file_name' => $testScript->js_file_name,
+                    'download_url' => $testScript->js_file_url,
+                    'content_type' => 'application/javascript',
+                ],
+                'message' => 'JavaScript file download info retrieved successfully',
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Internal server error',
+                'message' => 'Failed to retrieve JavaScript file download info',
+                'debug' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
     }
 }

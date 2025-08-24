@@ -59,3 +59,31 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## Project Features
+
+This Laravel application provides a comprehensive project and screen management system with the following features:
+
+### Admin Panel (Filament)
+- **Project Management**: Create, edit, view, and delete projects
+- **Project Detail View**: View detailed project information and associated screens
+- **Screen Management**: Create, edit, view, and delete screens within projects
+- **API Key Authentication**: Secure admin access using API keys
+
+### API Endpoints
+- **Projects**: Full CRUD operations for projects
+- **Screens**: Full CRUD operations for screens
+- **Project Screens**: Get all screens belonging to a specific project
+- **Authentication**: API key-based authentication for all protected endpoints
+
+### Project Detail View
+The project detail view (`/admin/projects/{id}`) displays:
+- Complete project information (name, description, timestamps)
+- List of all screens belonging to the project
+- Actions to edit the project or add new screens
+- Direct links to view/edit individual screens
+
+### Usage Examples
+- **View Project Details**: Navigate to `/admin/projects/{id}` in the admin panel
+- **Get Project Screens via API**: `GET /api/projects/{id}/screens` (requires API key)
+- **Create Screen for Project**: Use the "Add Screen" button in the project detail view

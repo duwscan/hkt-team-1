@@ -13,11 +13,17 @@ class TestResult extends Model
 
     protected $fillable = [
         'test_script_id',
+        'project_id',
+        'screen_id',
         'status',
         'execution_data',
         'started_at',
         'completed_at',
         'error_message',
+        'execution_time',
+        'screenshot_path',
+        'browser_info',
+        'environment_info',
     ];
 
     protected function casts(): array
@@ -26,11 +32,23 @@ class TestResult extends Model
             'execution_data' => 'array',
             'started_at' => 'datetime',
             'completed_at' => 'datetime',
+            'browser_info' => 'array',
+            'environment_info' => 'array',
         ];
     }
 
     public function testScript(): BelongsTo
     {
         return $this->belongsTo(TestScript::class);
+    }
+
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(Project::class);
+    }
+
+    public function screen(): BelongsTo
+    {
+        return $this->belongsTo(Screen::class);
     }
 }

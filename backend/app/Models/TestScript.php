@@ -16,6 +16,7 @@ class TestScript extends Model
     protected $fillable = [
         'name',
         'js_file_content',
+        'js_file_path',
         'project_id',
         'screen_id',
         'version',
@@ -37,7 +38,7 @@ class TestScript extends Model
                 if ($lastVersion) {
                     // Simple version increment (assumes format like "1.0.0")
                     $versionParts = explode('.', $lastVersion->version);
-                    $versionParts[2] = (int)$versionParts[2] + 1;
+                    $versionParts[2] = (int) $versionParts[2] + 1;
                     $testScript->version = implode('.', $versionParts);
                 } else {
                     $testScript->version = '1.0.0';
@@ -64,5 +65,23 @@ class TestScript extends Model
     public function testResults(): HasMany
     {
         return $this->hasMany(TestResult::class);
+    }
+
+    public function getJsFileUrlAttribute(): ?string
+    {
+        if ($this->js_file_path) {
+            return asset('storage/'.$this->js_file_path);
+        }
+
+        return null;
+    }
+
+    public function getJsFileNameAttribute(): ?string
+    {
+        if ($this->js_file_path) {
+            return basename($this->js_file_path);
+        }
+
+        return null;
     }
 }

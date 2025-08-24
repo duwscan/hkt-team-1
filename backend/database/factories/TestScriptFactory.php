@@ -17,7 +17,10 @@ class TestScriptFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'name' => fake()->words(3, true),
+            'version' => fake()->randomElement(['1.0.0', '1.1.0', '2.0.0', '1.0.1']),
+            'project_id' => null,
+            'screen_id' => null,
         ];
     }
 }

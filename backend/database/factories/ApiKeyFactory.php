@@ -17,7 +17,9 @@ class ApiKeyFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'key' => fake()->uuid(),
+            'name' => fake()->words(2, true),
+            'is_active' => true,
         ];
     }
 }
