@@ -14,7 +14,8 @@ import {
   Card,
   CardContent,
   Grid,
-  Divider
+  Divider,
+  CircularProgress
 } from '@mui/material';
 import {
   PlayArrow as PlayIcon,
@@ -22,10 +23,13 @@ import {
   CheckCircle as SuccessIcon,
   Error as ErrorIcon,
   Schedule as PendingIcon,
-  ArrowBack as BackIcon
+  ArrowBack as BackIcon,
+  Screenshot as ScreenshotIcon,
+  Timeline as TimelineIcon
 } from '@mui/icons-material';
 
 import { testExecutionService } from '../services/testExecutionService';
+import { apiService } from '../services/apiService';
 
 const TestExecution = ({ apiKey, project, scripts, onBack }) => {
   const [isRunning, setIsRunning] = useState(false);
@@ -34,65 +38,53 @@ const TestExecution = ({ apiKey, project, scripts, onBack }) => {
   const [results, setResults] = useState([]);
   const [logs, setLogs] = useState([]);
   const [progress, setProgress] = useState(0);
+  const [executionStatus, setExecutionStatus] = useState({});
+  const [screenshots, setScreenshots] = useState([]);
+
+  useEffect(() => {
+    // Cleanup on component unmount
+    return () => {
+      testExecutionService.cleanup();
+    };
+  }, []);
 
   const handleStartExecution = async () => {
     setIsRunning(true);
     setResults([]);
     setLogs([]);
     setProgress(0);
+    setScreenshots([]);
 
     try {
       // Initialize test execution service
-      testExecutionService.initialize(apiKey);
+      await testExecutionService.initialize(apiKey);
 
       // Execute scripts sequentially
-      for (let i = 0; i < scripts.length; i++) {
-        const script = scripts[i];
-        setCurrentScript(script);
-        setCurrentStep(i + 1);
-
-        // Update progress
-        const progressPercent = ((i) / scripts.length) * 100;
-        setProgress(progressPercent);
-
-        try {
-          addLog(`Starting execution of: ${script.name}`);
+      const executionResult = await testExecutionService.executeScripts(scripts, {
+        headless: false,
+        slowMo: 1000,
+        timeout: 30000
+      }, {
+        onStepComplete: (stepData) => {
+          setCurrentStep(prev => prev + 1);
+          updateProgress();
           
-          const result = await testExecutionService.executeScript(script, {
-            onStepComplete: (stepData) => {
-              addLog(`Step completed: ${stepData.url}`);
-              if (stepData.error) {
-                addLog(`Console error: ${stepData.error}`, 'error');
-              }
-            },
-            onScreenshot: (screenshotPath) => {
-              addLog(`Screenshot saved: ${screenshotPath}`);
-            }
-          });
-
-          setResults(prev => [...prev, {
-            scriptId: script.id,
-            scriptName: script.name,
-            status: 'success',
-            result: result,
-            completedAt: new Date()
-          }]);
-
-          addLog(`✅ Completed: ${script.name}`, 'success');
-
-        } catch (error) {
-          setResults(prev => [...prev, {
-            scriptId: script.id,
-            scriptName: script.name,
-            status: 'error',
-            error: error.message,
-            completedAt: new Date()
-          }]);
-
-          addLog(`❌ Failed: ${script.name} - ${error.message}`, 'error');
+          // Add step log
+          addLog(`Step completed: ${stepData.description || stepData.step}`, 'info');
+        },
+        
+        onScreenshot: async (screenshotPath) => {
+          setScreenshots(prev => [...prev, screenshotPath]);
+          addLog(`Screenshot saved: ${screenshotPath}`, 'info');
+          
+          // In browser environment, we can't directly upload files
+          // Screenshots will be handled by the backend when test results are submitted
+          addLog('📸 Screenshot will be uploaded with test results', 'info');
         }
-      }
+      });
 
+      // Update results
+      setResults(executionResult.results);
       setProgress(100);
       addLog('All scripts execution completed!', 'success');
 
@@ -104,8 +96,8 @@ const TestExecution = ({ apiKey, project, scripts, onBack }) => {
     }
   };
 
-  const handleStopExecution = () => {
-    testExecutionService.stopExecution();
+  const handleStopExecution = async () => {
+    await testExecutionService.stopExecution();
     setIsRunning(false);
     setCurrentScript(null);
     addLog('Execution stopped by user', 'warning');
@@ -117,6 +109,16 @@ const TestExecution = ({ apiKey, project, scripts, onBack }) => {
       message,
       type
     }]);
+  };
+
+  const updateProgress = () => {
+    const status = testExecutionService.getExecutionStatus();
+    setExecutionStatus(status);
+    
+    if (status.totalScripts > 0) {
+      const progressPercent = (status.completedScripts / status.totalScripts) * 100;
+      setProgress(progressPercent);
+    }
   };
 
   const getStatusIcon = (status) => {
@@ -139,6 +141,16 @@ const TestExecution = ({ apiKey, project, scripts, onBack }) => {
       default:
         return 'default';
     }
+  };
+
+  const getExecutionSummary = () => {
+    const status = testExecutionService.getExecutionStatus();
+    return {
+      total: status.totalScripts || 0,
+      successful: status.successfulScripts || 0,
+      failed: status.failedScripts || 0,
+      inProgress: status.isRunning ? 1 : 0
+    };
   };
 
   return (
@@ -208,7 +220,8 @@ const TestExecution = ({ apiKey, project, scripts, onBack }) => {
             {isRunning && (
               <Box sx={{ mb: 2 }}>
                 <Typography variant="body2" gutterBottom>
-                  Running: {currentScript?.name} ({currentStep}/{scripts.length})
+                  Running: {currentScript?.name || 'Initializing...'} 
+                  ({executionStatus.currentScriptIndex || 0}/{scripts.length})
                 </Typography>
                 <LinearProgress
                   variant="determinate"
@@ -248,8 +261,13 @@ const TestExecution = ({ apiKey, project, scripts, onBack }) => {
                             sx={{ mr: 1 }}
                           />
                           <Typography variant="caption">
-                            {result.completedAt.toLocaleTimeString()}
+                            {result.completedAt ? new Date(result.completedAt).toLocaleTimeString() : 'N/A'}
                           </Typography>
+                          {result.executionTime && (
+                            <Typography variant="caption" sx={{ ml: 1 }}>
+                              ({result.executionTime})
+                            </Typography>
+                          )}
                         </Box>
                       }
                     />
@@ -305,18 +323,46 @@ const TestExecution = ({ apiKey, project, scripts, onBack }) => {
         </Grid>
       </Grid>
 
+      {/* Screenshots Section */}
+      {screenshots.length > 0 && (
+        <Paper sx={{ p: 2, mt: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            <ScreenshotIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+            Screenshots ({screenshots.length})
+          </Typography>
+          <Grid container spacing={2}>
+            {screenshots.map((screenshot, index) => (
+              <Grid item xs={12} sm={6} md={4} key={index}>
+                <Card>
+                  <CardContent sx={{ textAlign: 'center' }}>
+                    <Typography variant="body2" color="text.secondary">
+                      {screenshot.includes('initial') ? 'Initial' : 
+                       screenshot.includes('final') ? 'Final' : `Step ${index + 1}`}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {screenshot.split('/').pop()}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </Paper>
+      )}
+
       {/* Summary */}
       {results.length > 0 && !isRunning && (
         <Paper sx={{ p: 2, mt: 3 }}>
           <Typography variant="h6" gutterBottom>
+            <TimelineIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
             Execution Summary
           </Typography>
           <Grid container spacing={2}>
-            <Grid item xs={4}>
+            <Grid item xs={3}>
               <Card>
                 <CardContent sx={{ textAlign: 'center' }}>
                   <Typography variant="h4" color="text.primary">
-                    {results.length}
+                    {getExecutionSummary().total}
                   </Typography>
                   <Typography color="text.secondary">
                     Total Scripts
@@ -324,11 +370,11 @@ const TestExecution = ({ apiKey, project, scripts, onBack }) => {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item xs={4}>
+            <Grid item xs={3}>
               <Card>
                 <CardContent sx={{ textAlign: 'center' }}>
                   <Typography variant="h4" color="success.main">
-                    {results.filter(r => r.status === 'success').length}
+                    {getExecutionSummary().successful}
                   </Typography>
                   <Typography color="text.secondary">
                     Successful
@@ -336,14 +382,26 @@ const TestExecution = ({ apiKey, project, scripts, onBack }) => {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item xs={4}>
+            <Grid item xs={3}>
               <Card>
                 <CardContent sx={{ textAlign: 'center' }}>
                   <Typography variant="h4" color="error.main">
-                    {results.filter(r => r.status === 'error').length}
+                    {getExecutionSummary().failed}
                   </Typography>
                   <Typography color="text.secondary">
                     Failed
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={3}>
+              <Card>
+                <CardContent sx={{ textAlign: 'center' }}>
+                  <Typography variant="h4" color="warning.main">
+                    {screenshots.length}
+                  </Typography>
+                  <Typography color="text.secondary">
+                    Screenshots
                   </Typography>
                 </CardContent>
               </Card>

@@ -50,24 +50,29 @@ const Dashboard = ({ apiKey, onRunTests }) => {
   useEffect(() => {
     if (selectedProject) {
       loadScreens(selectedProject);
-      loadScripts(selectedProject);
+      // Don't load scripts here, wait for screen selection
     }
   }, [selectedProject]);
 
   useEffect(() => {
-    if (selectedProject) {
-      loadScripts(selectedProject, selectedScreen, selectedTags, searchTerm);
+    if (selectedScreen) {
+      // Load scripts when screen is selected, not when project changes
+      loadScripts(selectedScreen, selectedTags, searchTerm);
+    } else {
+      // Clear scripts when no screen is selected
+      setScripts([]);
     }
   }, [selectedScreen, selectedTags, searchTerm]);
 
   const loadProjects = async () => {
     try {
       setLoading(true);
+      setError('');
       const data = await apiService.getProjects(apiKey);
       setProjects(data);
     } catch (error) {
-      setError('Failed to load projects');
-      console.error(error);
+      setError(`Failed to load projects: ${error.message}`);
+      console.error('Project loading error:', error);
     } finally {
       setLoading(false);
     }
@@ -75,24 +80,27 @@ const Dashboard = ({ apiKey, onRunTests }) => {
 
   const loadScreens = async (projectId) => {
     try {
+      setError('');
       const data = await apiService.getScreens(apiKey, projectId);
       setScreens(data);
     } catch (error) {
-      console.error('Failed to load screens:', error);
+      setError(`Failed to load screens: ${error.message}`);
+      console.error('Screen loading error:', error);
     }
   };
 
-  const loadScripts = async (projectId, screenId = '', tags = [], search = '') => {
+  const loadScripts = async (screenId, tags = [], search = '') => {
     try {
+      setError('');
       const data = await apiService.getScripts(apiKey, {
-        project: projectId,
         screen: screenId,
         tags: tags,
         search: search
       });
       setScripts(data);
     } catch (error) {
-      console.error('Failed to load scripts:', error);
+      setError(`Failed to load scripts: ${error.message}`);
+      console.error('Script loading error:', error);
     }
   };
 
@@ -287,6 +295,16 @@ const Dashboard = ({ apiKey, onRunTests }) => {
                             <Typography variant="body2">
                               Version: {script.version} | Screen: {script.screen?.name}
                             </Typography>
+                            {script.description && (
+                              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                                {script.description}
+                              </Typography>
+                            )}
+                            {script.target_url && (
+                              <Typography variant="body2" color="primary" sx={{ mt: 0.5, fontFamily: 'monospace' }}>
+                                🌐 {script.target_url}
+                              </Typography>
+                            )}
                             {script.tags && script.tags.length > 0 && (
                               <Box sx={{ mt: 1 }}>
                                 {script.tags.map((tag) => (

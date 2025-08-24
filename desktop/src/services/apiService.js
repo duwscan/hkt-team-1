@@ -1,67 +1,55 @@
 import axios from 'axios';
-
-// Mock API base URL - replace with actual backend URL
-const API_BASE_URL = 'http://localhost:8000/api';
+import { API_CONFIG, getApiUrl, getEndpoint, formatApiError } from '../config/api.js';
 
 class ApiService {
   constructor() {
     this.client = axios.create({
-      baseURL: API_BASE_URL,
-      timeout: 10000,
+      baseURL: API_CONFIG.BASE_URL,
+      timeout: API_CONFIG.REQUEST.TIMEOUT,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      }
     });
   }
 
   // Set API key for requests
   setApiKey(apiKey) {
-    this.client.defaults.headers.common['Authorization'] = `Bearer ${apiKey}`;
     this.client.defaults.headers.common['X-API-Key'] = apiKey;
   }
 
-  // Validate API key
+  // Validate API key by making a test request
   async validateApiKey(apiKey) {
     try {
-      // For demo purposes, we'll mock this validation
-      // In real implementation, this would call the backend
-      if (apiKey && apiKey.length > 5) {
-        this.setApiKey(apiKey);
+      this.setApiKey(apiKey);
+      
+      // Test API key by trying to get projects
+      const response = await this.client.get(getEndpoint('PROJECTS'));
+      
+      if (response.status === 200) {
+        console.log('✅ API key validated successfully');
         return true;
       }
       return false;
     } catch (error) {
-      console.error('API Key validation error:', error);
+      console.error('❌ API key validation failed:', error.message);
       return false;
     }
   }
 
-  // Get projects
+  // Get all projects
   async getProjects(apiKey) {
     try {
       this.setApiKey(apiKey);
       
-      // Mock data for demo - replace with actual API call
-      // const response = await this.client.get('/projects');
-      // return response.data;
+      const response = await this.client.get(getEndpoint('PROJECTS'));
+      console.log('📊 Projects loaded from API:', response.data.data.length);
+      return response.data.data;
       
-      return [
-        {
-          id: 1,
-          name: 'E-commerce Website',
-          description: 'Main e-commerce platform testing'
-        },
-        {
-          id: 2,
-          name: 'Mobile App API',
-          description: 'Mobile application backend API testing'
-        },
-        {
-          id: 3,
-          name: 'Admin Dashboard',
-          description: 'Administrative dashboard testing'
-        }
-      ];
     } catch (error) {
-      console.error('Failed to get projects:', error);
-      throw error;
+      const errorMessage = formatApiError(error);
+      console.error('❌ Failed to get projects:', errorMessage);
+      throw new Error(errorMessage);
     }
   }
 
@@ -70,164 +58,244 @@ class ApiService {
     try {
       this.setApiKey(apiKey);
       
-      // Mock data for demo
-      const mockScreens = {
-        1: [
-          { id: 1, name: 'Login Page', domain: 'example.com', url_path: '/login' },
-          { id: 2, name: 'Product Listing', domain: 'example.com', url_path: '/products' },
-          { id: 3, name: 'Shopping Cart', domain: 'example.com', url_path: '/cart' },
-          { id: 4, name: 'Checkout', domain: 'example.com', url_path: '/checkout' }
-        ],
-        2: [
-          { id: 5, name: 'API Authentication', domain: 'api.example.com', url_path: '/auth' },
-          { id: 6, name: 'User Profile', domain: 'api.example.com', url_path: '/profile' }
-        ],
-        3: [
-          { id: 7, name: 'Dashboard Home', domain: 'admin.example.com', url_path: '/dashboard' },
-          { id: 8, name: 'User Management', domain: 'admin.example.com', url_path: '/users' }
-        ]
-      };
+      const response = await this.client.get(getEndpoint('PROJECT_SCREENS', projectId));
+      console.log(`📱 Screens loaded for project ${projectId}:`, response.data.data.length);
+      return response.data.data;
       
-      return mockScreens[projectId] || [];
     } catch (error) {
-      console.error('Failed to get screens:', error);
-      throw error;
+      const errorMessage = formatApiError(error);
+      console.error(`❌ Failed to get screens for project ${projectId}:`, errorMessage);
+      throw new Error(errorMessage);
     }
   }
 
-  // Get scripts with filtering
+  // Get test scripts with filtering
   async getScripts(apiKey, filters = {}) {
     try {
       this.setApiKey(apiKey);
       
-      // Mock data for demo
-      let mockScripts = [
-        {
-          id: 1,
-          name: 'Login Flow Test',
-          version: '1.2',
-          screen: { id: 1, name: 'Login Page' },
-          project_id: 1,
-          tags: ['auth', 'critical'],
-          file_path: '/scripts/login_test.js'
-        },
-        {
-          id: 2,
-          name: 'Product Search Test',
-          version: '2.1',
-          screen: { id: 2, name: 'Product Listing' },
-          project_id: 1,
-          tags: ['search', 'products'],
-          file_path: '/scripts/product_search.js'
-        },
-        {
-          id: 3,
-          name: 'Cart Add/Remove Test',
-          version: '1.5',
-          screen: { id: 3, name: 'Shopping Cart' },
-          project_id: 1,
-          tags: ['cart', 'critical'],
-          file_path: '/scripts/cart_test.js'
-        },
-        {
-          id: 4,
-          name: 'Checkout Process Test',
-          version: '3.0',
-          screen: { id: 4, name: 'Checkout' },
-          project_id: 1,
-          tags: ['checkout', 'critical', 'payment'],
-          file_path: '/scripts/checkout_test.js'
-        },
-        {
-          id: 5,
-          name: 'API Authentication Test',
-          version: '1.0',
-          screen: { id: 5, name: 'API Authentication' },
-          project_id: 2,
-          tags: ['api', 'auth'],
-          file_path: '/scripts/api_auth_test.js'
-        }
-      ];
-
-      // Apply filters
-      if (filters.project) {
-        mockScripts = mockScripts.filter(script => script.project_id == filters.project);
-      }
-
-      if (filters.screen) {
-        mockScripts = mockScripts.filter(script => script.screen.id == filters.screen);
-      }
-
-      if (filters.tags && filters.tags.length > 0) {
-        mockScripts = mockScripts.filter(script => 
-          filters.tags.some(tag => script.tags.includes(tag))
-        );
-      }
-
+      // Build query parameters for search endpoint
+      const params = new URLSearchParams();
+      
+      // Add search term if provided
       if (filters.search) {
-        const searchLower = filters.search.toLowerCase();
-        mockScripts = mockScripts.filter(script => 
-          script.name.toLowerCase().includes(searchLower) ||
-          script.tags.some(tag => tag.toLowerCase().includes(searchLower))
-        );
+        params.append('q', filters.search);
       }
-
-      return mockScripts;
+      
+      // Add screen filter (primary filter)
+      if (filters.screen) {
+        params.append('screen_id', filters.screen);
+      }
+      
+      // Add project filter (secondary, optional)
+      if (filters.project) {
+        params.append('project_id', filters.project);
+      }
+      
+      // Note: Tags filtering is not supported by backend yet
+      // We'll filter tags on frontend if needed
+      if (filters.tags && filters.tags.length > 0) {
+        console.log('⚠️ Tags filtering not supported by backend, filtering on frontend');
+      }
+      
+      // Use search endpoint for filtering
+      const endpoint = filters.search || filters.screen || filters.project
+        ? `${getEndpoint('TEST_SCRIPTS')}/search?${params.toString()}`
+        : getEndpoint('TEST_SCRIPTS');
+      
+      const response = await this.client.get(endpoint);
+      console.log('📝 Scripts loaded from API:', response.data.data.length);
+      
+      let scripts = response.data.data;
+      
+      // Apply tags filtering on frontend if backend doesn't support it
+      if (filters.tags && filters.tags.length > 0) {
+        scripts = scripts.filter(script => 
+          filters.tags.some(tag => script.tags?.some(scriptTag => scriptTag.name === tag || scriptTag === tag))
+        );
+        console.log(`📝 Scripts filtered by tags: ${scripts.length} remaining`);
+      }
+      
+      // Transform API response to match our expected format
+      return scripts.map(script => ({
+        id: script.id,
+        name: script.name,
+        version: script.version || '1.0.0',
+        screen: {
+          id: script.screen_id,
+          name: script.screen?.name || 'Unknown Screen'
+        },
+        project_id: script.project_id,
+        tags: script.tags?.map(tag => typeof tag === 'string' ? tag : tag.name) || [],
+        file_path: script.js_file_path || `./scripts/script-${script.id}.js`,
+        target_url: script.target_url || `https://example.com/script-${script.id}`,
+        description: script.description || 'No description available'
+      }));
+      
     } catch (error) {
-      console.error('Failed to get scripts:', error);
-      throw error;
+      const errorMessage = formatApiError(error);
+      console.error('❌ Failed to get scripts:', error.message);
+      throw new Error(errorMessage);
     }
   }
 
-  // Submit test results
+  // Get script content from backend
+  async getScriptContent(apiKey, scriptId) {
+    try {
+      this.setApiKey(apiKey);
+      
+      const response = await this.client.get(getEndpoint('SCRIPT_CONTENT', scriptId), {
+        responseType: 'text'
+      });
+      
+      console.log(`📄 Script content loaded for script ${scriptId}`);
+      return response.data;
+      
+    } catch (error) {
+      const errorMessage = formatApiError(error);
+      console.error(`❌ Failed to get script content for ${scriptId}:`, errorMessage);
+      throw new Error(errorMessage);
+    }
+  }
+
+  // Submit test results to backend
   async submitTestResults(apiKey, results) {
     try {
       this.setApiKey(apiKey);
       
-      // Mock submission for demo
-      console.log('Submitting test results:', results);
+      // Transform results to match backend API format
+      const resultsData = {
+        test_script_id: results.scriptId,
+        status: results.status === 'success' ? 'passed' : 'failed',
+        execution_data: {
+          steps: results.executionSteps?.map(step => step.description || step.type) || [],
+          assertions: results.consoleLogs?.filter(log => log.type === 'log').map(log => log.text) || [],
+          screenshots: results.screenshots || [],
+          performance_metrics: results.performanceMetrics || []
+        },
+        started_at: results.startTime,
+        completed_at: results.endTime,
+        error_message: results.error || null,
+        execution_time: parseInt(results.executionTime) || 0,
+        screenshot_path: results.screenshots?.[0] || null,
+        browser_info: {
+          browser: 'Chrome (Puppeteer)',
+          version: 'Puppeteer v24.0.0'
+        },
+        environment_info: {
+          os: process.platform,
+          node_version: process.version,
+          app: 'Chrome Recorder Desktop'
+        }
+      };
+
+      const response = await this.client.post(getEndpoint('TEST_RESULT_SAVE'), resultsData);
       
-      // In real implementation:
-      // const response = await this.client.post('/test-results', results);
-      // return response.data;
+      console.log('📤 Test results submitted successfully:', response.data.data.id);
+      return response.data;
       
-      return { success: true, id: Date.now() };
     } catch (error) {
-      console.error('Failed to submit test results:', error);
-      throw error;
+      const errorMessage = formatApiError(error);
+      console.error('❌ Failed to submit test results:', errorMessage);
+      throw new Error(errorMessage);
     }
   }
 
-  // Get test results
-  async getTestResults(apiKey, filters = {}) {
+  // Update test result status
+  async updateTestResultStatus(apiKey, resultId, statusData) {
     try {
       this.setApiKey(apiKey);
       
-      // Mock data for demo
-      return [
-        {
-          id: 1,
-          script_name: 'Login Flow Test',
-          project: 'E-commerce Website',
-          screen: 'Login Page',
-          status: 'success',
-          executed_at: new Date(Date.now() - 3600000),
-          duration: '2.5s'
-        },
-        {
-          id: 2,
-          script_name: 'Product Search Test',
-          project: 'E-commerce Website',
-          screen: 'Product Listing',
-          status: 'failed',
-          executed_at: new Date(Date.now() - 7200000),
-          duration: '4.1s',
-          error: 'Element not found: .search-button'
-        }
-      ];
+      const response = await this.client.put(getEndpoint('TEST_RESULT_STATUS', resultId), statusData);
+      
+      console.log(`📝 Test result ${resultId} status updated successfully`);
+      return response.data;
+      
     } catch (error) {
-      console.error('Failed to get test results:', error);
-      throw error;
+      const errorMessage = formatApiError(error);
+      console.error(`❌ Failed to update test result ${resultId}:`, errorMessage);
+      throw new Error(errorMessage);
+    }
+  }
+
+  // Upload screenshot for test result
+  async uploadScreenshot(apiKey, resultId, screenshotFile, description = '') {
+    try {
+      this.setApiKey(apiKey);
+      
+      // Validate file size
+      if (screenshotFile.size > API_CONFIG.UPLOAD.MAX_FILE_SIZE) {
+        throw new Error(`File size exceeds limit of ${API_CONFIG.UPLOAD.MAX_FILE_SIZE / (1024 * 1024)}MB`);
+      }
+      
+      // Validate file type
+      if (!API_CONFIG.UPLOAD.ALLOWED_IMAGE_TYPES.includes(screenshotFile.type)) {
+        throw new Error(`File type ${screenshotFile.type} is not allowed`);
+      }
+      
+      const formData = new FormData();
+      formData.append('screenshot', screenshotFile);
+      if (description) {
+        formData.append('description', description);
+      }
+
+      const response = await this.client.post(getEndpoint('TEST_RESULT_SCREENSHOT', resultId), formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      console.log(`📸 Screenshot uploaded for test result ${resultId}`);
+      return response.data;
+      
+    } catch (error) {
+      const errorMessage = formatApiError(error);
+      console.error(`❌ Failed to upload screenshot for result ${resultId}:`, errorMessage);
+      throw new Error(errorMessage);
+    }
+  }
+
+  // Get test results for a script
+  async getTestResults(apiKey, scriptId) {
+    try {
+      this.setApiKey(apiKey);
+      
+      const response = await this.client.get(getEndpoint('TEST_RESULTS_BY_SCRIPT', scriptId));
+      
+      console.log(`📊 Test results loaded for script ${scriptId}:`, response.data.data.length);
+      return response.data.data;
+      
+    } catch (error) {
+      const errorMessage = formatApiError(error);
+      console.error(`❌ Failed to get test results for script ${scriptId}:`, errorMessage);
+      throw new Error(errorMessage);
+    }
+  }
+
+  // Get API keys for the user
+  async getApiKeys(apiKey) {
+    try {
+      this.setApiKey(apiKey);
+      
+      const response = await this.client.get(getEndpoint('API_KEYS'));
+      console.log('🔑 API keys loaded:', response.data.data.length);
+      return response.data.data;
+      
+    } catch (error) {
+      const errorMessage = formatApiError(error);
+      console.error('❌ Failed to get API keys:', errorMessage);
+      throw new Error(errorMessage);
+    }
+  }
+
+  // Health check for backend connectivity
+  async healthCheck() {
+    try {
+      const response = await this.client.get(getEndpoint('HEALTH'));
+      return response.status === 200;
+    } catch (error) {
+      console.error('❌ Backend health check failed:', error.message);
+      return false;
     }
   }
 }

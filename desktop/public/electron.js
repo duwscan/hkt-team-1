@@ -65,3 +65,71 @@ ipcMain.handle('show-open-dialog', async (event, options) => {
   const result = await dialog.showOpenDialog(mainWindow, options);
   return result;
 });
+
+// Puppeteer IPC handlers
+ipcMain.handle('puppeteer-execute-script', async (event, scriptData) => {
+  try {
+    // This will be implemented to handle Puppeteer operations
+    // For now, return a mock response
+    console.log('🎬 Puppeteer script execution requested:', scriptData.scriptName);
+    
+    return {
+      success: true,
+      message: 'Script execution completed (mock mode)',
+      data: {
+        scriptId: scriptData.scriptId,
+        executionTime: '2000ms',
+        status: 'success'
+      }
+    };
+  } catch (error) {
+    console.error('❌ Puppeteer execution failed:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+});
+
+ipcMain.handle('puppeteer-take-screenshot', async (event, options) => {
+  try {
+    // This will be implemented to handle screenshot capture
+    console.log('📸 Screenshot requested:', options);
+    
+    return {
+      success: true,
+      filePath: `./screenshots/screenshot_${Date.now()}.png`,
+      message: 'Screenshot captured (mock mode)'
+    };
+  } catch (error) {
+    console.error('❌ Screenshot capture failed:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+});
+
+ipcMain.handle('puppeteer-get-performance', async (event) => {
+  try {
+    // This will be implemented to handle performance metrics
+    console.log('📊 Performance metrics requested');
+    
+    return {
+      success: true,
+      metrics: {
+        timestamp: Date.now(),
+        pageLoad: 200,
+        domContentLoaded: 100,
+        jsHeapUsed: '2.5 MB',
+        jsHeapTotal: '5.0 MB'
+      }
+    };
+  } catch (error) {
+    console.error('❌ Performance metrics failed:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+});

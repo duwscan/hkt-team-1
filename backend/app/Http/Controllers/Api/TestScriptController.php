@@ -89,27 +89,40 @@ class TestScriptController extends Controller
     {
         $query = TestScript::with(['project', 'screen', 'tags']);
 
-        if ($request->has('q')) {
+        // Priority 1: Screen ID filtering (most specific)
+        if ($request->has('screen_id') && $request->screen_id) {
+            $query->where('screen_id', $request->screen_id);
+        }
+
+        // Priority 2: Project ID filtering (broader scope)
+        if ($request->has('project_id') && $request->project_id) {
+            $query->where('project_id', $request->project_id);
+        }
+
+        // Priority 3: Text search
+        if ($request->has('q') && $request->q) {
             $searchTerm = $request->q;
             $query->where(function ($q) use ($searchTerm) {
                 $q->where('name', 'like', "%{$searchTerm}%")
+                    ->orWhere('description', 'like', "%{$searchTerm}%")
                     ->orWhere('js_file_content', 'like', "%{$searchTerm}%");
             });
         }
 
-        if ($request->has('project_id')) {
-            $query->where('project_id', $request->project_id);
-        }
-
-        if ($request->has('screen_id')) {
-            $query->where('screen_id', $request->screen_id);
-        }
+        // Add ordering for consistent results
+        $query->orderBy('name', 'asc');
 
         $testScripts = $query->get();
 
         return response()->json([
             'data' => $testScripts,
             'message' => 'Test scripts search completed',
+            'filters_applied' => [
+                'screen_id' => $request->screen_id ?? null,
+                'project_id' => $request->project_id ?? null,
+                'search_term' => $request->q ?? null,
+                'total_results' => $testScripts->count()
+            ]
         ]);
     }
 

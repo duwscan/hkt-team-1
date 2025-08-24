@@ -49,6 +49,14 @@ jspm_packages/
 
 # Screenshots from test execution
 screenshots/
+*.png
+*.jpg
+*.jpeg
+
+# Puppeteer/Chrome Recorder outputs
+test-output/
+output/
+*.log
 
 # Temporary files
 tmp/
