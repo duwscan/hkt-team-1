@@ -17,7 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Aliases
         $middleware->alias([
-            'api.key' => \App\Http\Middleware\ApiKeyAuth::class,
+            'api.key' => \App\Http\Middleware\ApiKeyAuthentication::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

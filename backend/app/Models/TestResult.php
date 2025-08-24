@@ -8,26 +8,19 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class TestResult extends Model
 {
-    /** @use HasFactory<\Database\Factories\TestResultFactory> */
     use HasFactory;
 
     protected $fillable = [
-        'test_script_id',
+        'console_output',
+        'screenshot_path',
         'status',
-        'execution_data',
-        'started_at',
-        'completed_at',
-        'error_message',
+        'executed_at',
+        'test_script_id',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'execution_data' => 'array',
-            'started_at' => 'datetime',
-            'completed_at' => 'datetime',
-        ];
-    }
+    protected $casts = [
+        'executed_at' => 'datetime',
+    ];
 
     public function testScript(): BelongsTo
     {

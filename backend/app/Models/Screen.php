@@ -9,15 +9,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Screen extends Model
 {
-    /** @use HasFactory<\Database\Factories\ScreenFactory> */
     use HasFactory;
 
     protected $fillable = [
         'name',
-        'domain',
-        'url_path',
+        'url',
         'project_id',
-        'description',
     ];
 
     public function project(): BelongsTo
